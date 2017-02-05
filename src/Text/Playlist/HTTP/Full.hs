@@ -132,7 +132,7 @@ download env startURL = fmap fst <$> runS go env (State 0) where
 
   ------------------------------------------------------------------------------
   -- | Start playlist processing with the startURL.
-  go :: (MonadIO m) => Download m Playlist
+  go :: Download m Playlist
   go = resolve [Track startURL Nothing] fetch
 
   ------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ download env startURL = fmap fst <$> runS go env (State 0) where
   ------------------------------------------------------------------------------
   -- | Initiate a HTTP download in IO and then delegate the parsing of
   -- the response body to the parseBody function.
-  fetch :: (MonadIO m) => Text -> Download m Playlist
+  fetch :: Text -> Download m Playlist
   fetch url = do
     r <- request url
     e <- ask
@@ -158,7 +158,7 @@ download env startURL = fmap fst <$> runS go env (State 0) where
 
   ------------------------------------------------------------------------------
   -- | Like liftIO but catch exceptions and turn them into an Error.
-  safeIO :: (MonadIO m) => IO (Either Error a) -> Download m a
+  safeIO :: IO (Either Error a) -> Download m a
   safeIO action = io (catch action stop)
     where
       io a = Download (lift (hoistEither =<< liftIO a))
@@ -189,14 +189,14 @@ parseBody url response = do
 
     ----------------------------------------------------------------------------
     -- | Dispatch an attoparsec response.
-    dispatch :: (MonadIO m) => Atto.Result Playlist -> Download m Playlist
+    dispatch :: Atto.Result Playlist -> Download m Playlist
     dispatch (Atto.Fail _ _ err) = Download . lift $ left (FailedToParse err)
     dispatch (Atto.Partial f)    = readChunk >>= dispatch . f
     dispatch (Atto.Done _ r)     = return r
 
     ----------------------------------------------------------------------------
     -- | Read bytes from the HTTP body.
-    readChunk :: (MonadIO m) => Download m ByteString
+    readChunk :: Download m ByteString
     readChunk = do
       check <- asks httpByteCheck
       count <- gets httpBytes
