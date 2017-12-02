@@ -133,7 +133,7 @@ download env startURL = fmap fst <$> runS go env (State 0) where
   ------------------------------------------------------------------------------
   -- | Start playlist processing with the startURL.
   go :: Download m Playlist
-  go = resolve [Track startURL Nothing] fetch
+  go = resolve [Track startURL Nothing Nothing] fetch
 
   ------------------------------------------------------------------------------
   -- | Turn a URL into a HTTP Request object.
