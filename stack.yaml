@@ -1,9 +1,14 @@
-resolver: lts-7.19
+resolver: lts-9.14
+# resolver: lts-7.19
 # resolver: lts-6.30
 
 packages:
 - ../playlists
 - ./
+
+nix:
+  enable: false
+  shell-file: stack.nix
 
 flags:
   playlists-http:
