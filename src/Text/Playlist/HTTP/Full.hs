@@ -28,7 +28,7 @@ module Text.Playlist.HTTP.Full
 -- Package imports:
 import Control.Monad.Catch
 import Control.Monad.RWS.Strict
-import Control.Monad.Trans.Either
+import Control.Monad.Trans.Except
 import qualified Data.Attoparsec.ByteString as Atto
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString
@@ -79,7 +79,7 @@ data State = State
 -- | Internal type used for managing state, access to the environment,
 -- and access to IO.
 newtype Download m a =
-  Download { runDownload :: RWST Environment () State (EitherT Error m) a }
+  Download { runDownload :: RWST Environment () State (ExceptT Error m) a }
 
   deriving ( Functor
            , Applicative
@@ -92,7 +92,7 @@ newtype Download m a =
 --------------------------------------------------------------------------------
 -- | 'MonadThrow' instance for 'Download'.
 instance (Monad m) => MonadThrow (Download m) where
-  throwM = Download . lift . left . FailedOnException . show
+  throwM = Download . lift . throwE . FailedOnException . show
 
 --------------------------------------------------------------------------------
 -- | Internal helper function for getting a result out of a 'Download'
@@ -103,7 +103,7 @@ runS :: (Monad m)
      -> State
      -> m (Either Error (a, State))
 runS d e s = do
-  result <- runEitherT $ runRWST (runDownload d) e s
+  result <- runExceptT $ runRWST (runDownload d) e s
   case result of
     Left err         -> return (Left err)
     Right (x, s', _) -> return (Right (x, s'))
@@ -161,7 +161,11 @@ download env startURL = fmap fst <$> runS go env (State 0) where
   safeIO :: IO (Either Error a) -> Download m a
   safeIO action = io (catch action stop)
     where
-      io a = Download (lift (hoistEither =<< liftIO a))
+      io a = do x <- liftIO a
+                case x of
+                  Left e   -> Download . lift $ throwE e
+                  Right x' -> return x'
+
       stop = return . Left . ProtocolError
 
 --------------------------------------------------------------------------------
@@ -173,7 +177,7 @@ parseBody :: forall m. (MonadIO m)
           -> Response BodyReader
           -> Download m Playlist
 parseBody url response = do
-    parser <- Download (lift (hoistEither lookupParser))
+    parser <- Download (lift . ExceptT $ return lookupParser)
     bytes  <- readChunk
     dispatch (Atto.parse parser bytes)
 
@@ -190,7 +194,7 @@ parseBody url response = do
     ----------------------------------------------------------------------------
     -- | Dispatch an attoparsec response.
     dispatch :: Atto.Result Playlist -> Download m Playlist
-    dispatch (Atto.Fail _ _ err) = Download . lift $ left (FailedToParse err)
+    dispatch (Atto.Fail _ _ err) = Download . lift $ throwE (FailedToParse err)
     dispatch (Atto.Partial f)    = readChunk >>= dispatch . f
     dispatch (Atto.Done _ r)     = return r
 
@@ -202,7 +206,7 @@ parseBody url response = do
       count <- gets httpBytes
 
       case check count of
-        LimitReached -> Download . lift $ left ResponseTooLarge
+        LimitReached -> Download . lift $ throwE ResponseTooLarge
         Continue     -> do
           bytes <- liftIO $ brRead (responseBody response)
           modify' (\s -> s {httpBytes = ByteString.length bytes + count})
