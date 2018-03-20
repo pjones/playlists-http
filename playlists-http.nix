@@ -3,7 +3,7 @@
 }:
 mkDerivation {
   pname = "playlists-http";
-  version = "0.1.2.0";
+  version = "0.2.1.0";
   src = ./.;
   isLibrary = true;
   isExecutable = true;

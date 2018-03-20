@@ -1,3 +1,7 @@
+# Version 0.2.1.0 (March 20, 2018)
+
+  * Update dependency bounds
+
 # Version 0.2.0.0 (December 1, 2017)
 
   * Update to match `playlists` 0.5.0.0

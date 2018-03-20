@@ -6,10 +6,6 @@ packages:
 - ../playlists
 - ./
 
-nix:
-  enable: false
-  shell-file: stack.nix
-
 flags:
   playlists-http:
     maintainer: true
