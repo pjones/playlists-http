@@ -1,4 +1,4 @@
-playlists-http [![Travis][travis-shield]][travis]
+playlists-http
 ==============
 
 Download and parse playlists over HTTP.
@@ -15,6 +15,3 @@ See the following modules for more details:
 
 There is also an `examples/example.hs` that demonstrates how to use
 the `download` function which is found in `Text.Playlist.HTTP.Full`.
-
-[travis]: https://travis-ci.org/pjones/playlists-http
-[travis-shield]: https://travis-ci.org/pjones/playlists-http.svg?branch=master
