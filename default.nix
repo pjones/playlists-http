@@ -2,18 +2,21 @@
 }:
 
 let
-  # Helpful if you want to override any Haskell packages:
-  overrides = self: super: {
-    http-client = if super ? http-client_0_6_2
-      then super.http-client_0_6_2
-      else super.http-client;
+  nix-hs-src = fetchGit {
+    url = "https://code.devalot.com/open/nix-hs.git";
+    rev = "2003332a1e8e518b54e6143f9a9467a8a05abca4";
   };
 
-  # Apply the overrides from above:
-  haskell = pkgs.haskellPackages.override (orig: {
-    overrides = pkgs.lib.composeExtensions
-      (orig.overrides or (_: _: {})) overrides; });
-in
+  nix-hs = import "${nix-hs-src}/default.nix" { inherit pkgs; };
 
-# Load the local nix file and use the overrides from above:
-haskell.callPackage ./playlists-http.nix { }
+in nix-hs {
+  cabal = ./playlists-http.cabal;
+  flags = [ "build-examples" ];
+
+  overrides = lib: self: super: with lib; {
+    http-client =
+      if super ? http-client_0_6_2
+        then super.http-client_0_6_2
+        else super.http-client;
+  };
+}
