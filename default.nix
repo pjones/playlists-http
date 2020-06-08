@@ -1,22 +1,13 @@
-{ pkgs ? import <nixpkgs> { }
-}:
+{ sources ? import ./nix/sources.nix, pkgs ? import sources.nixpkgs { }
+, nix-hs ? import sources.nix-hs { inherit pkgs; }, compiler ? "default" }:
 
-let
-  nix-hs-src = fetchGit {
-    url = "https://code.devalot.com/open/nix-hs.git";
-    rev = "2003332a1e8e518b54e6143f9a9467a8a05abca4";
-  };
+nix-hs {
+  inherit compiler;
 
-  nix-hs = import "${nix-hs-src}/default.nix" { inherit pkgs; };
-
-in nix-hs {
   cabal = ./playlists-http.cabal;
   flags = [ "build-examples" ];
 
-  overrides = lib: self: super: with lib; {
-    http-client =
-      if super ? http-client_0_6_2
-        then super.http-client_0_6_2
-        else super.http-client;
+  overrides = lib: self: super: {
+    playlists = import sources.playlists { inherit pkgs nix-hs compiler; };
   };
 }
